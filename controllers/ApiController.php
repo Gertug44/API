@@ -2,7 +2,9 @@
 
 namespace app\controllers;
 
-class ApiController
+use yii\web\Controller;
+
+class ApiController extends Controller
 {
 
 }
