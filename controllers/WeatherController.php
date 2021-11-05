@@ -2,67 +2,57 @@
 
 namespace app\controllers;
 
-use yii\rest\Controller;
-
-use \Firebase\JWT\JWT;
-class WeatherController extends Controller
+use app\controllers\ApiController;
+use app\components\JWTCom;
+use yii;
+class WeatherController extends ApiController
 {
-    public function actionGetWeather()
+    public $enableCsrfValidation = false;
+    public function actionGet()
     {
-        include_once '../config/core.php';
-        include_once '../libs/php-jwt-master/src/BeforeValidException.php';
-        include_once '../libs/php-jwt-master/src/ExpiredException.php';
-        include_once '../libs/php-jwt-master/src/SignatureInvalidException.php';
-        include_once '../libs/php-jwt-master/src/JWT.php';
-        $data = json_decode(file_get_contents("php://input"));
+        $post=(file_get_contents("php://input"));
+        $data = json_decode($post);
         $lat=$data ->lat;
         $lon=$data ->lon;
         $jwt=isset($data->jwt) ? $data->jwt : "";
 
         if($jwt)
         {
-            try
-            {
-                $decoded = JWT::decode($jwt, $key, array('HS256'));
-
-                // код ответа 
-                http_response_code(200);
-                $url = 'http://api.openweathermap.org/data/2.5/weather';
-                $options = array(
-                   'lat'=> $lat,
-                   'lon'=> $lon,
-                   'appid'=>'ed91cf347bfe28a62e07c4b5a5fb48ab',
-                   'units'=> 'metric',
-                   'lang'=> 'ru',
-                );
-
-                $ch=curl_init();
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_URL, $url.'?'.http_build_query($options));
-
-                $responce=curl_exec($ch);
-
-                curl_close($ch);
-                echo ($responce);
+                $result=JWTCom::decodeJWT($jwt);
+                if ($result["status"]=="success")
+                {
+                    $url = Yii::$app->params['weatherURL'];
+                    $options = array(
+                       'lat'=> $lat,
+                       'lon'=> $lon,
+                       'appid'=>Yii::$app->params['weatherKey'],
+                       'units'=> 'metric',
+                       'lang'=> 'ru',
+                    );
+    
+                    $ch=curl_init();
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_URL, $url.'?'.http_build_query($options));
+    
+                    $responce=curl_exec($ch);
+    
+                    curl_close($ch);
+                    $this->responce(200,array(
+                      "message" => json_decode($responce)
+                    ));
+                }
+                else{
+                    // сообщить пользователю отказано в доступе и показать сообщение об ошибке 
+                    $this->responce(400,array(
+                        "message" => "Доступ закрыт.",
+                        "error" => $result['error']
+                    ));
+                }
             }
-            catch (Exception $e){
-
-                // код ответа 
-                http_response_code(401);
-            
-                // сообщить пользователю отказано в доступе и показать сообщение об ошибке 
-                echo json_encode(array(
-                    "message" => "Доступ закрыт.",
-                    "error" => $e->getMessage()
-                ));
-            }
-        }
         else
         {
-            http_response_code(401);
-
             // сообщить пользователю что доступ запрещен 
-            echo json_encode(array("message" => "Доступ запрещён."));
+            $this->responce(401,array("message" => "Доступ запрещён."));
         }
     }
 }

@@ -1,11 +1,11 @@
 <?php
 namespace app\controllers;
-use yii\web\Controller;
-use app\models\users;
-use yii\filters\ContentNegotiator;
-use yii\web\Response;
-use \Firebase\JWT\JWT;
-class UserController extends Controller
+use app\controllers\ApiController;
+use app\components\JWTCom;
+use app\models\Users;
+use app\models\ChangePassForm;
+use yii;
+class UserController extends ApiController
 {
     public $enableCsrfValidation = false;
     
@@ -19,41 +19,28 @@ class UserController extends Controller
         if (
             !empty($email) &&
             !empty($password))
-            if (users::find()->where(['email'=>$email])->exists())
+            if (Users::find()->where(['email'=>$email])->exists())
             {
-                http_response_code(400);
-                echo json_encode(array("message" => "Указанный email существует."));
+                $this->responce(400,array("message" => "Указанный email существует."));
             }
             else
             {
-                $user=new users();
+                $user=new Users();
                 $user -> email=$email;
                 $user -> password=password_hash($password,PASSWORD_BCRYPT);
                 $user -> save();
                 // устанавливаем код ответа 
-                http_response_code(200);        
-                // покажем сообщение о том, что пользователь был создан 
-                echo json_encode(array("message" => "Пользователь был создан."));
+                $this->responce(200,array("message" => "Пользователь был создан."));
 
             }
         // сообщение, если не удаётся создать пользователя 
         else {
-         
-            // устанавливаем код ответа 
-           http_response_code(400);
-         
-            // покажем сообщение о том, что создать пользователя не удалось 
-            echo json_encode(array("message"=>"Невозможно создать пользователя."));
+            $this->responce(400,array("message" => "Невозможно создать пользователя."));
         }
     }
     
     public function actionLogin()
     {
-        include_once "..\config\core.php";
-        include_once '..\libs\php-jwt-master\src\BeforeValidException.php';
-        include_once '..\libs\php-jwt-master\src\ExpiredException.php';
-        include_once '..\libs\php-jwt-master\src\SignatureInvalidException.php';
-        include_once '..\libs\php-jwt-master\src\JWT.php';
         $post=(file_get_contents("php://input"));
         $data = json_decode($post);
         $email = $data->email;
@@ -61,46 +48,45 @@ class UserController extends Controller
 
         if (empty($email) ||
         empty($password)){
-            echo json_encode(array("message"=>"Валенок, пароль и мыло не должны быть пустыми"));
+            $this->responce(400,array("message"=>"Валенок, пароль и мыло не должны быть пустыми"));
             return;
         }
-        if (users::find()->where(['email'=>$email])->exists())
+        if (Users::find()->where(['email'=>$email])->exists())
         {
-            $user=users::find()->where(['email'=>$email])->one();
+            $user=Users::find()->where(['email'=>$email])->one();
             if (password_verify($password,$user->password)) {
- 
-                $token = array(
-                   "iss" => $iss,
-                   "aud" => $aud,
-                   "iat" => $iat,
-                   "nbf" => $nbf,
-                   "data" => array(
-                       "id" => $user->id,
-                       "email" => $user->email
-                   )
-                   );
-             
-                // код ответа 
-                http_response_code(200);
-             
-                // создание jwt 
-                $jwt = JWT::encode($token, $key);
-                echo json_encode(
-                    array(
-                        "message" => "Успешный вход в систему.",
-                        "jwt" => $jwt
-                    )
-                );
+             $jwt=JWTCom::createJWT($user);
+
+                $this->responce(201,array("message" => "Успешный вход в систему.","jwt" => $jwt));
              
             }
             else{
-                echo json_encode(array("message"=>"Пароль неверный"));
+                $this->responce(400,array("message"=>"Пароль неверный"));
             }
         }
         else
         {
-            echo json_encode(array("message"=>"Обладатель этого мыла еще не смешарик"));
+            $this->responce(400,array("message"=>"Обладатель этого мыла еще не смешарик"));
         }
     }
+    public function actionChange(){
+        $post=(file_get_contents("php://input"));
+        $data = json_decode($post);
+        $email = $data->email;
+        $newPassword = $data->newPassword;
+        if (Users::find()->where(['email'=>$email])->exists())
+        {
+            $user=Users::find()->where(['email'=>$email])->one();
+            $user ->password=password_hash($params['newPassword'],PASSWORD_BCRYPT);
+            $this->responce(200,array("message"=>"Пароль изменен"));
+
+        }
+        else
+        {
+             $this->responce(400,array("message"=>"Обладатель этого мыла еще не смешарик, нечего менять"));       
+        }
+        
+    }
+    
 }
 ?>
