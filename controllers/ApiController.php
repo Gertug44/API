@@ -52,11 +52,11 @@ class ApiController extends Controller
     public function angle($prev, $current, $next)
     {
         $vectorX = array($current['lat'] - $prev['lat'], $current['lng'] - $prev['lng']);
-        $vectorY = array($next['lat'] - $current['lat'], $next['lng'] - $current['lng']);
+        $vectorY = array($current['lat'] - $next['lat'], $current['lng'] - $next['lng']);
         $scalarmul = $vectorX[0] * $vectorY[0] + $vectorX[1] * $vectorY[1];
         $LengthX = sqrt(pow($vectorX[0], 2) + pow($vectorX[1], 2));
         $LengthY = sqrt(pow($vectorY[0], 2) + pow($vectorY[1], 2));
-        return round((($scalarmul / ($LengthX * $LengthY))), 4);
+        return round(acos(($scalarmul / ($LengthX * $LengthY)))*180/pi(), 2);
     }
 
 

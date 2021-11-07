@@ -9,7 +9,7 @@ use yii\captcha\Captcha;
     <div class="col-lg-5">
 
         <div class="container">
-            <form id="form" method="post">
+            <form id="form" action="" method="post">
                 <input type="text" placeholder="FromLat" name="FromLat">
                 <input type="text" placeholder="FromLng" name="FromLng">
                 <input type="text" placeholder="ToLat" name="ToLat">
@@ -20,10 +20,14 @@ use yii\captcha\Captcha;
 
     </div>
     <div class="container">
-        <?php
-        echo '<pre>';
-            $turns!=null? print_r($turns) : print("Координаты не заданы");
-        echo '</pre>';
-        ?>
+        <div class="row">
+            <div class="cl-lg-12">
+            <?php
+            echo '<pre>';
+                $turns!=null? print_r($turns) : print("Координаты не заданы");
+            echo '</pre>';
+            ?>
+            </div>
+        </div>
     </div>
 </div>
