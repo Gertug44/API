@@ -68,7 +68,7 @@ class Logger
     protected function _write($string){
         fwrite($this->fp, $string);
  
-        echo $string;
+        //echo $string;
     }
  
     public function __destruct(){
