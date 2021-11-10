@@ -5,6 +5,7 @@ namespace app\controllers;
 use app\controllers\ApiController;
 use app\components\JWTCom;
 use yii;
+use app\components\Logger;
 class WeatherController extends ApiController
 {
     public $enableCsrfValidation = false;
@@ -15,7 +16,7 @@ class WeatherController extends ApiController
         $lat=$data ->lat;
         $lon=$data ->lon;
         $jwt=isset($data->jwt) ? $data->jwt : "";
-
+        Logger::getLogger("dev")->log("Получаем погодку");
         if($jwt)
         {
                 $result=JWTCom::decodeJWT($jwt);
@@ -37,13 +38,17 @@ class WeatherController extends ApiController
                     $responce=curl_exec($ch);
     
                     curl_close($ch);
+                    Logger::getLogger("dev")->log("Все четко лови погоду");
                     $this->responce(200,array(
-                      "message" => json_decode($responce)
+                      "status" => "success",
+                      "weather" => json_decode($responce)
                     ));
                 }
                 else{
+                    Logger::getLogger("dev")->log("Что-то пошло не так");
                     // сообщить пользователю отказано в доступе и показать сообщение об ошибке 
                     $this->responce(400,array(
+                        "status" => "fail",
                         "message" => "Доступ закрыт.",
                         "error" => $result['error']
                     ));
@@ -51,8 +56,11 @@ class WeatherController extends ApiController
             }
         else
         {
+            Logger::getLogger("dev")->log("Пустой jwt");
             // сообщить пользователю что доступ запрещен 
-            $this->responce(401,array("message" => "Доступ запрещён."));
+            $this->responce(401,array(
+                "status" => "fail",
+                "message" => "Доступ запрещён."));
         }
     }
 }

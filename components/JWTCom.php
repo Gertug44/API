@@ -36,10 +36,12 @@ class JWTCom {
             $decoded = JWT::decode($jwt, $key, array('HS256'));
             $result['status']='success';
             $result['token'] = $decoded;
+            Logger::getLogger("dev")->log("Успешное декодирование jwt");
         } catch (\Exception $e){
 
             $result['status']="fail";
             $result["error"] = $e->getMessage();
+            Logger::getLogger("dev")->log($e);
         }
         return $result;        
     }

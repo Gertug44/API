@@ -5,6 +5,9 @@ use app\components\JWTCom;
 use app\models\Users;
 use app\models\ChangePassForm;
 use yii;
+use app\components\Logger;
+
+
 class UserController extends ApiController
 {
     public $enableCsrfValidation = false;
@@ -16,12 +19,16 @@ class UserController extends ApiController
         $email = $data->email;
         $password = $data->password;
 
+        Logger::getLogger("dev")->log("Начата регистрация пользователя");
         if (
             !empty($email) &&
             !empty($password))
             if (Users::find()->where(['email'=>$email])->exists())
             {
-                $this->responce(400,array("message" => "Указанный email существует."));
+                $this->responce(400,array(
+                    "status" => "fail",
+                    "error" => "Указанный email существует."));
+                Logger::getLogger("dev")->log("Регистрация пользователя невозможна email занят");
             }
             else
             {
@@ -30,12 +37,18 @@ class UserController extends ApiController
                 $user -> password=password_hash($password,PASSWORD_BCRYPT);
                 $user -> save();
                 // устанавливаем код ответа 
-                $this->responce(200,array("message" => "Пользователь был создан."));
+                $this->responce(200,array(
+                    "status" => "success",
+                    "message" => "Пользователь был создан."));
+                Logger::getLogger("dev")->log("Пользователь успешно зарегестрировался");
 
             }
         // сообщение, если не удаётся создать пользователя 
         else {
-            $this->responce(400,array("message" => "Невозможно создать пользователя."));
+            $this->responce(400,array(
+                "status" => "fail",
+                "error" => "Невозможно создать пользователя."));
+            Logger::getLogger("dev")->log("Нет данных для регистрации");
         }
     }
     
@@ -46,9 +59,15 @@ class UserController extends ApiController
         $email = $data->email;
         $password = $data->password;
 
+        Logger::getLogger("dev")->log("Пользователь пытается войти");
+
         if (empty($email) ||
         empty($password)){
-            $this->responce(400,array("message"=>"Валенок, пароль и мыло не должны быть пустыми"));
+
+            Logger::getLogger("dev")->log("Ошибка: пустые данные");
+            $this->responce(400,array(
+                "status" => "fail",
+                "error"=>"Валенок, пароль и мыло не должны быть пустыми"));
             return;
         }
         if (Users::find()->where(['email'=>$email])->exists())
@@ -56,17 +75,27 @@ class UserController extends ApiController
             $user=Users::find()->where(['email'=>$email])->one();
             if (password_verify($password,$user->password)) {
              $jwt=JWTCom::createJWT($user);
-
-                $this->responce(201,array("message" => "Успешный вход в систему.","jwt" => $jwt));
+             
+             Logger::getLogger("dev")->log("Пользователь успешно вошел в систему");
+                
+             $this->responce(201,array(
+                    "status" => "success",
+                    "message" => "Успешный вход в систему.","jwt" => $jwt));
              
             }
             else{
-                $this->responce(400,array("message"=>"Пароль неверный"));
+                Logger::getLogger("dev")->log("пользователь ввел неверный пароль");
+                $this->responce(400,array(
+                    "status" => "fail",
+                    "error"=>"Пароль неверный"));
             }
         }
         else
         {
-            $this->responce(400,array("message"=>"Обладатель этого мыла еще не смешарик"));
+            Logger::getLogger("dev")->log("Указанного пользователя нет в бд");
+            $this->responce(400,array(
+                "status" => "fail",
+                "error"=>"Обладатель этого мыла еще не смешарик"));
         }
     }
     public function actionChange(){
@@ -74,16 +103,28 @@ class UserController extends ApiController
         $data = json_decode($post);
         $email = $data->email;
         $newPassword = $data->newPassword;
+        if (empty($email) ||
+        empty($newPassword)){
+            $this->responce(400,array(
+                "status" => "fail",
+                "error"=>"Валенок, пароль и мыло не должны быть пустыми"));
+        }
         if (Users::find()->where(['email'=>$email])->exists())
         {
+            // Представим что-где-то тут отправка письма на мыло
+            // Костыли
             $user=Users::find()->where(['email'=>$email])->one();
             $user ->password=password_hash($params['newPassword'],PASSWORD_BCRYPT);
-            $this->responce(200,array("message"=>"Пароль изменен"));
+            $this->responce(200,array(
+                "status" => "success",
+                "message"=>"Пароль изменен"));
 
         }
         else
         {
-             $this->responce(400,array("message"=>"Обладатель этого мыла еще не смешарик, нечего менять"));       
+             $this->responce(400,array(
+                "status" => "fail",
+                 "error"=>"Обладатель этого мыла еще не смешарик, нечего менять"));       
         }
         
     }

@@ -57,8 +57,4 @@ class ApiController extends Controller
         header('Content-type: ' . $content_type);
         echo json_encode($body);
     }
-    public function actionError()
-    {
-        echo json_encode(array("message"=>"Что-то пошло не так"));
-    }
 }
