@@ -3,7 +3,6 @@ namespace app\controllers;
 use app\controllers\ApiController;
 use app\components\JWTCom;
 use app\models\Users;
-use app\models\ChangePassForm;
 use yii;
 use app\components\Logger;
 

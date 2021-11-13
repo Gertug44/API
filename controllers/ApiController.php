@@ -1,8 +1,10 @@
 <?php
 namespace app\controllers;
 use yii\web\Controller;
+use yii;
 class ApiController extends Controller
 {
+
     function getStatusCodeMessage($status)
     {
         $codes  = Array(
@@ -56,5 +58,19 @@ class ApiController extends Controller
         header($status_header);
         header('Content-type: ' . $content_type);
         echo json_encode($body);
+    }
+
+    public function actionError()
+    {
+        $exception = Yii::$app->errorHandler->exception;
+        if($exception->statusCode==404){
+            $this->responce(404,array("error"=>"Not found"));
+            die();
+        }
+        if($exception->statusCode==500){
+            $this->responce(500,array("error"=>"Что-то пошло не так"));
+            die();
+        }
+
     }
 }
