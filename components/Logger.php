@@ -4,7 +4,7 @@ namespace app\components;
 class Logger
 {
     //статические переменные
-    public static $PATH="..\logs";
+    public static $PATH="../runtime/logs";
     protected static $loggers=array();
  
     protected $name;

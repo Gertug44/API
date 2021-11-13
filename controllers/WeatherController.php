@@ -44,23 +44,20 @@ class WeatherController extends ApiController
                       "weather" => json_decode($responce)
                     ));
                 }
-                else{
-                    Logger::getLogger("dev")->log("Что-то пошло не так");
-                    // сообщить пользователю отказано в доступе и показать сообщение об ошибке 
-                    $this->responce(400,array(
-                        "status" => "fail",
-                        "message" => "Доступ закрыт.",
-                        "error" => $result['error']
-                    ));
-                }
-            }
-        else
-        {
-            Logger::getLogger("dev")->log("Пустой jwt");
-            // сообщить пользователю что доступ запрещен 
-            $this->responce(401,array(
-                "status" => "fail",
-                "message" => "Доступ запрещён."));
+
+                Logger::getLogger("dev")->log("Что-то пошло не так");
+                // сообщить пользователю отказано в доступе и показать сообщение об ошибке 
+                $this->responce(400,array(
+                    "status" => "fail",
+                    "message" => "Доступ закрыт.",
+                    "error" => $result['error']
+                ));
         }
+
+        Logger::getLogger("dev")->log("Пустой jwt");
+        // сообщить пользователю что доступ запрещен 
+        $this->responce(401,array(
+            "status" => "fail",
+            "message" => "Доступ запрещён."));
     }
 }

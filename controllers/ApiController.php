@@ -2,6 +2,7 @@
 namespace app\controllers;
 use yii\web\Controller;
 use yii;
+use app\components\Logger;
 class ApiController extends Controller
 {
 
@@ -52,24 +53,29 @@ class ApiController extends Controller
         );
         return (isset($codes[$status])) ? $codes[$status] : '';
     }
-    function responce($status = 200,$body = [],$content_type='application/json')
+    function responce($body = [],$status = 200,$content_type='application/json')
     {
         $status_header = 'HTTP/1.1 ' . $status . ' ' . $this->getStatusCodeMessage($status);
         header($status_header);
         header('Content-type: ' . $content_type);
         echo json_encode($body);
+        exit();
+    }
+
+    private function ErrorResponce($body,$status=500)
+    {
+        Logger::getLogger("dev")->log("Что-то пошло не так:".$body["error"]);
+        $this->responce($body,$status);
     }
 
     public function actionError()
     {
         $exception = Yii::$app->errorHandler->exception;
         if($exception->statusCode==404){
-            $this->responce(404,array("error"=>"Not found"));
-            die();
+            $this->ErrorResponce(array("error"=>"Not found"),404);
         }
         if($exception->statusCode==500){
-            $this->responce(500,array("error"=>"Что-то пошло не так"));
-            die();
+            $this->ErrorResponce(array("error"=>"Сервер болеет",500));
         }
 
     }
