@@ -6,39 +6,32 @@ use Exception;
 use yii\web\Controller;
 use Yii;
 
-class ApiController extends Controller
+class RouteController extends Controller
 {
     public $enableCsrfValidation = false;
 
-    public function actionGetapi()
+    public function actionGetRoute()
     {
-        $content = $this->getturns();
+        $content = $this->getTurns();
         $request = Yii::$app->request;
         if
         (
-            $request->get('FromLat')!=null &&
-            $request->get('FromLng')!=null &&
-            $request->get('ToLat')!=null &&
-            $request->get('ToLng')!=null 
+            $request->get('FromLat')!=null && $request->get('FromLng')!=null && $request->get('ToLat')!=null && $request->get('ToLng')!=null
         )       
         return json_encode($content);
         else  return json_encode(["Error,  " => "Request error"]);
     }
-    public function actionDebug()
-    {
-        $content = array();
-        if (isset($_POST['submit'])) $content = $this->getturns();
-        return $this->render('debug', ['turns' => $content]);
-    }
    
-    private function getturns()
+    private function getTurns()
     {
-        $data = $this->getfullapi();
+        $request = Yii::$app->request;
+        $data = $this->getFullApi($request->get('FromLat'),$request->get('FromLng'),$request->get('ToLat'),$request->get('ToLng'));
         $turns = array();
         try 
         {
-            foreach ($data['route']['legs']['0']['maneuvers'] as &$startpoint) 
-            $turns[] = &$startpoint['startPoint'];
+            foreach ($data['route']['legs']['0']['maneuvers'] as &$startpoint){ 
+                $turns[] = &$startpoint['startPoint'];
+            }
             $this->InsertIntoArr($turns);
             return $turns;
         } 
@@ -58,8 +51,14 @@ class ApiController extends Controller
 
     public function angle($prev, $current, $next)
     {
-        $vectorX = array($current['lat'] - $prev['lat'], $current['lng'] - $prev['lng']);
-        $vectorY = array($current['lat'] - $next['lat'], $current['lng'] - $next['lng']);
+        $vectorX = [
+            $current['lat'] - $prev['lat'], 
+            $current['lng'] - $prev['lng']
+        ];
+        $vectorY = [
+            $current['lat'] - $next['lat'], 
+            $current['lng'] - $next['lng']
+        ];
         $scalarmul = $vectorX[0] * $vectorY[0] + $vectorX[1] * $vectorY[1];
         $LengthX = sqrt(pow($vectorX[0], 2) + pow($vectorX[1], 2));
         $LengthY = sqrt(pow($vectorY[0], 2) + pow($vectorY[1], 2));
@@ -67,10 +66,9 @@ class ApiController extends Controller
     }
 
 
-    private function getfullapi()
+    private function getFullApi($FromLat,$FromLng,$ToLat,$ToLng )
     {
-        $request = Yii::$app->request;
-        $curl = "http://open.mapquestapi.com/directions/v2/route?key=dtKoIJL6pOrvQKs8vKJcmDx0IhGmonjF&from=" . $request->get('FromLat') . "," . $request->get('FromLng') . "&to=" . $request->get('ToLat') . "," . $request->get('ToLng'); 
+        $curl = "http://open.mapquestapi.com/directions/v2/route?key=dtKoIJL6pOrvQKs8vKJcmDx0IhGmonjF&from=" . $FromLat . "," . $FromLng . "&to=" . $ToLat . "," . $ToLng; 
         
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
