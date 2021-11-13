@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use Exception;
 use yii\web\Controller;
+use Yii;
 
 class ApiController extends Controller
 {
@@ -11,19 +12,25 @@ class ApiController extends Controller
 
     public function actionGetapi()
     {
-        $content = array();
-        if (isset($_POST['submit'])) $content = $this->getturns();
-        return $this->render('getapi', ['turns' => $content]);
+        $content = $this->getturns();
+        $request = Yii::$app->request;
+        if
+        (
+            $request->get('FromLat')!=null &&
+            $request->get('FromLng')!=null &&
+            $request->get('ToLat')!=null &&
+            $request->get('ToLng')!=null 
+        )       
+        return json_encode($content);
+        else  return json_encode(["Error,  " => "Request error"]);
     }
-
-    public function actionFullapi()
+    public function actionDebug()
     {
         $content = array();
-        if (isset($_POST['submit'])) $content = $this->getfullapi();
-        return $this->render('getapi', ['turns' => $content]);
+        if (isset($_POST['submit'])) $content = $this->getturns();
+        return $this->render('debug', ['turns' => $content]);
     }
-
-
+   
     private function getturns()
     {
         $data = $this->getfullapi();
@@ -37,7 +44,7 @@ class ApiController extends Controller
         } 
         catch (Exception $e) 
         {
-            return "Маршрут не найден,  " . $e->getMessage();
+            return ["Error,  " => "Route not found"];
         }
     }
 
@@ -62,7 +69,9 @@ class ApiController extends Controller
 
     private function getfullapi()
     {
-        $curl = "http://open.mapquestapi.com/directions/v2/route?key=dtKoIJL6pOrvQKs8vKJcmDx0IhGmonjF&from=" . $_POST['FromLat'] . "," . $_POST['FromLng'] . "&to=" . $_POST['ToLat'] . "," . $_POST['ToLng'];
+        $request = Yii::$app->request;
+        $curl = "http://open.mapquestapi.com/directions/v2/route?key=dtKoIJL6pOrvQKs8vKJcmDx0IhGmonjF&from=" . $request->get('FromLat') . "," . $request->get('FromLng') . "&to=" . $request->get('ToLat') . "," . $request->get('ToLng'); 
+        
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_URL, $curl);
