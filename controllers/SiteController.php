@@ -126,12 +126,4 @@ class SiteController extends Controller
     {
         return $this->render('about');
     }
-    public function actionApi()
-    {
-        return $this->render('api');
-    }
-    public function actionAngle()
-    {
-        return $this->render('angle');
-    }
 }
