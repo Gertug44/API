@@ -19,7 +19,7 @@ class UserController extends ApiController
         $password = $data->password;
 
         Logger::getLogger("dev")->log("Начата регистрация пользователя");
-        if (isset($email) && isset($password))
+        if (!empty($email) && !empty($password))
         {
             if (Users::find()->where(['email'=>$email])->exists())
             {
@@ -73,7 +73,7 @@ class UserController extends ApiController
                 
              $this->responce(array(
                     "status" => "success",
-                    "message" => "Успешный вход в систему.","jwt" => $jwt),201);
+                    "message" => "Успешный вход в систему.","jwt" => $jwt),200);
             }
             Logger::getLogger("dev")->log("пользователь ввел неверный пароль");
 
