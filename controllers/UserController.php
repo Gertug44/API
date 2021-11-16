@@ -16,7 +16,7 @@ class UserController extends ApiController
         $post=(file_get_contents("php://input"));
         $data = json_decode($post);
         $email = $data->email;
-        $password = $data->password;
+        $password   = $data->password;
 
         Logger::getLogger("dev")->log("Начата регистрация пользователя");
         if (!empty($email) && !empty($password))
@@ -104,7 +104,7 @@ class UserController extends ApiController
             // Представим что-где-то тут отправка письма на мыло
             // Костыли
             $user=Users::find()->where(['email'=>$email])->one();
-            $user ->password=password_hash($params['newPassword'],PASSWORD_BCRYPT);
+            $user ->password=password_hash($newPassword,PASSWORD_BCRYPT);
             $this->responce(array(
                 "status" => "success",
                 "message"=>"Пароль изменен"));

@@ -5,51 +5,95 @@ namespace app\controllers;
 use Exception;
 use yii\web\Controller;
 use Yii;
+use app\components\JWTCom;
+use app\components\Logger;
 
-class RouteController extends Controller
+class RouteController extends ApiController
 {
     public $enableCsrfValidation = false;
 
-    public function actionGetRoute()
+    public function actionGetRoute()        //Возвращает маршрут с углами поворотов и погодой
     {
-        $content = $this->getTurns();
         $request = Yii::$app->request;
-        if
-        (
-            $request->get('FromLat')!=null && $request->get('FromLng')!=null && $request->get('ToLat')!=null && $request->get('ToLng')!=null
-        )       
-        return json_encode($content);
-        else  return json_encode(["Error,  " => "Request error"]);
+
+        if ($request->get('key')!=null)
+        {
+            $result = JWTCom::decodeJWT($request->get('key'));
+            if ($result["status"] == "success") 
+            {
+                Logger::getLogger("dev")->log("Начато получение API маршрута");
+                if ($request->get('FromLat') != null && $request->get('FromLng') != null && $request->get('ToLat') != null && $request->get('ToLng') != null) 
+                {
+                    $content = $this->getTurns(false);
+                    Logger::getLogger("dev")->log("Успешно получен маршрут по ключу: ".$request->get('key'));
+                    $this->responce(array(
+                        "status" => "success",
+                        "route" => json_encode($content)
+                    ), 200);
+                }
+                Logger::getLogger("dev")->log("Введен не полный запрос");
+                $this->responce(array(
+                    "status" => "fail",
+                    "message" => "Ошибка запроса(недостаточно данных).",
+                    "error" => $result['error']
+                ), 400);
+            }
+            Logger::getLogger("dev")->log("Что-то пошло не так");
+            $this->responce(array(
+                "status" => "fail",
+                "message" => "Доступ закрыт.",
+                "error" => $result['error']
+            ), 400);
+        }
+        
+        Logger::getLogger("dev")->log("Пользователь не авторизован");
+        $this->responce(array(
+            "status" => "fail",
+            "message" => "Доступ запрещён."),401);
     }
-   
-    private function getTurns()
+    
+    private function getTurns($returnfull = true)         //Функция выбирает из общего массива данных только повороты 
     {
         $request = Yii::$app->request;
         $data = $this->getFullApi($request->get('FromLat'),$request->get('FromLng'),$request->get('ToLat'),$request->get('ToLng'));
-        $turns = array();
+        $turns = [];
         try 
         {
             foreach ($data['route']['legs']['0']['maneuvers'] as &$startpoint){ 
                 $turns[] = &$startpoint['startPoint'];
             }
-            $this->InsertIntoArr($turns);
-            return $turns;
-        } 
+            Logger::getLogger("dev")->log("Успешно получены все повороты маршрута");
+            $this->InsertAngleIntoArr($turns);
+            $this->InsertWeatherIntoArr($turns);
+            return $returnfull==true? $data :$turns;          //При returnfull==true возвращает изначальный массив, с добавленными данными, при false только повороты с добавленными данными
+        }   
         catch (Exception $e) 
         {
-            return ["Error,  " => "Route not found"];
+            Logger::getLogger("dev")->log("Ошибка добавления".$e->getMessage() );
+            $this->responce(array(
+                "status" => "fail",
+                "message" => "Ошибка добавления".$e->getMessage(),
+            ), 400);
         }
     }
 
-    private function InsertIntoArr(&$array)
+    private function InsertWeatherIntoArr(&$array)              //Вставляет в общий массив коэффициенты погоды для каждой точки маршрута
+    {
+
+        for ($i = 0; $i <= count($array) - 1; $i++) {
+            
+         }
+        Logger::getLogger("dev")->log("Успешно добавлена погода на все повороты маршрута");
+    }
+    private function InsertAngleIntoArr(&$array)                //Вставляет в общий массив углы поворотов 
     {
         for ($i = 1; $i <= count($array) - 2; $i++) {
-            $array[$i]['angle'] = $this->angle($array[$i - 1], $array[$i], $array[$i + 1]);
+            $array[$i]['angle'] = $this->CalculateAngleByVectors($array[$i - 1], $array[$i], $array[$i + 1]);
         }
-        return $array;
+        Logger::getLogger("dev")->log("Успешно добавлены углы поворотов маршрута");
     }
 
-    public function angle($prev, $current, $next)
+    private function CalculateAngleByVectors($prev, $current, $next)        //Вычисляет угол по трем векторам
     {
         $vectorX = [
             $current['lat'] - $prev['lat'], 
@@ -66,9 +110,10 @@ class RouteController extends Controller
     }
 
 
-    private function getFullApi($FromLat,$FromLng,$ToLat,$ToLng )
+    private function getFullApi($FromLat,$FromLng,$ToLat,$ToLng )           //Получение общего массива маршрута по АПИ 
     {
-        $curl = "http://open.mapquestapi.com/directions/v2/route?key=dtKoIJL6pOrvQKs8vKJcmDx0IhGmonjF&from=" . $FromLat . "," . $FromLng . "&to=" . $ToLat . "," . $ToLng; 
+        Logger::getLogger("dev")->log("Получение маршрута с MapQuest");
+        $curl = Yii::$app->params['routeURL'].Yii::$app->params['routeKey']."&from=".$FromLat.",".$FromLng."&to=".$ToLat.",".$ToLng;
         
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -78,4 +123,5 @@ class RouteController extends Controller
         $data = json_decode($responce, true);
         return $data;
     }
+
 }

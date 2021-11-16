@@ -9,12 +9,13 @@ use app\components\Logger;
 class WeatherController extends ApiController
 {
     public $enableCsrfValidation = false;
+
     public function actionGet()
     {
         $post=(file_get_contents("php://input"));
         $data = json_decode($post);
-        $lat=$data ->lat;
-        $lon=$data ->lon;
+        $lat=$data->lat;
+        $lon=$data->lon;
         $jwt=isset($data->jwt) ? $data->jwt : "";
         Logger::getLogger("dev")->log("Получаем погодку");
         if($jwt)
@@ -39,25 +40,25 @@ class WeatherController extends ApiController
     
                     curl_close($ch);
                     Logger::getLogger("dev")->log("Все четко лови погоду");
-                    $this->responce(200,array(
+                    $this->responce(array(
                       "status" => "success",
                       "weather" => json_decode($responce)
-                    ));
+                    ),200);
                 }
 
                 Logger::getLogger("dev")->log("Что-то пошло не так");
                 // сообщить пользователю отказано в доступе и показать сообщение об ошибке 
-                $this->responce(400,array(
+                $this->responce(array(
                     "status" => "fail",
                     "message" => "Доступ закрыт.",
                     "error" => $result['error']
-                ));
+                ),400);
         }
 
         Logger::getLogger("dev")->log("Пустой jwt");
         // сообщить пользователю что доступ запрещен 
-        $this->responce(401,array(
+        $this->responce(array(
             "status" => "fail",
-            "message" => "Доступ запрещён."));
+            "message" => "Доступ запрещён."),401);
     }
 }
