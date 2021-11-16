@@ -59,6 +59,6 @@ class WeatherController extends ApiController
         // сообщить пользователю что доступ запрещен 
         $this->responce(array(
             "status" => "fail",
-            "message" => "Доступ запрещён."),401);
+            "message" => "Доступ запрещён."),400);
     }
 }
