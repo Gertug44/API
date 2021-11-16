@@ -39,7 +39,7 @@ class WeatherController extends ApiController
     
                     curl_close($ch);
                     Logger::getLogger("dev")->log("Все четко лови погоду");
-                    $this->responce(200,array(
+                    $this->responce(array(
                       "status" => "success",
                       "weather" => json_decode($responce)
                     ));
@@ -47,17 +47,17 @@ class WeatherController extends ApiController
 
                 Logger::getLogger("dev")->log("Что-то пошло не так");
                 // сообщить пользователю отказано в доступе и показать сообщение об ошибке 
-                $this->responce(400,array(
+                $this->responce(array(
                     "status" => "fail",
                     "message" => "Доступ закрыт.",
                     "error" => $result['error']
-                ));
+                ),400);
         }
 
         Logger::getLogger("dev")->log("Пустой jwt");
         // сообщить пользователю что доступ запрещен 
-        $this->responce(401,array(
+        $this->responce(array(
             "status" => "fail",
-            "message" => "Доступ запрещён."));
+            "message" => "Доступ запрещён."),400);
     }
 }
