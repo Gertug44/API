@@ -7,30 +7,27 @@ use Yii;
 
 class Weather
 {
-    public static function getWeather($lat, $lng, $jwt)             //Возвращает 
+    public static function getWeather($lat, $lng)             //Возвращает 
     {
         try {
-            $curl = curl_init();
+            $url = Yii::$app->params['weatherURL'];
+            $options = array(
+               'lat'=> $lat,
+               'lon'=> $lng,
+               'appid'=>Yii::$app->params['weatherKey'],
+               'units'=> 'metric',
+               'lang'=> 'ru',
+            );
 
-            curl_setopt_array($curl, array(
-                CURLOPT_URL => Yii::$app->params['weatherGetURL'],
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => '',
-                CURLOPT_MAXREDIRS => 10,
-                CURLOPT_TIMEOUT => 0,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => 'GET',
-                CURLOPT_POSTFIELDS => '{"lat":' . $lat . ',"lon":"' . $lng . '","jwt":"' . $jwt . '"}',
-                CURLOPT_HTTPHEADER => array(
-                    'Content-Type: application/json'
-                ),
-            ));
-            $response = curl_exec($curl);
+            $ch=curl_init();
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_URL, $url.'?'.http_build_query($options));
 
-            curl_close($curl);
+            $responce=curl_exec($ch);
+
+            curl_close($ch);
             Logger::getLogger("dev")->log("Успешно добавлена погода маршрута");
-            return json_decode($response);
+            return json_decode($responce);
         } catch (Exception $e) {
             Logger::getLogger("dev")->log("Ошибка добавления погоды маршрута" . $e->getMessage());
         }
