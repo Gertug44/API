@@ -41,7 +41,6 @@ class RouteController extends ApiController
                 $this->responce(array(
                     "status" => "fail",
                     "message" => "Ошибка запроса(недостаточно данных).",
-                    "error" => $result['error']
                 ), 400);
             }
             Logger::getLogger("dev")->log("Что-то пошло не так");
@@ -80,33 +79,37 @@ class RouteController extends ApiController
 
     private function InsertWeatherIntoArr(&$array)              //Вычисляет погоду для каждого поворота маршрута
     {
-        $request = Yii::$app->request;
         for ($i = 0; $i <= count($array) - 1; $i++) {
-            $array[$i]['weather'] = Weather::getWeather($array[$i]['lat'], $array[$i]['lng'], $request->get('key'));
+            $array[$i]['weather'] = Weather::getWeather($array[$i]['lat'], $array[$i]['lng']);
         }
     }
     private function InsertAngleIntoArr(&$array)                //Вычисляет углы поворотов 
     {
+
         for ($i = 1; $i <= count($array) - 2; $i++) {
             $array[$i]['angle'] = $this->CalculateAngleByVectors($array[$i - 1], $array[$i], $array[$i + 1]);
         }
-        Logger::getLogger("dev")->log("Успешно добавлены углы поворотов маршрута");
     }
 
     private function CalculateAngleByVectors($prev, $current, $next)        //Вычисляет угол по трем векторам
     {
-        $vectorX = [
-            $current['lat'] - $prev['lat'],
-            $current['lng'] - $prev['lng']
-        ];
-        $vectorY = [
-            $current['lat'] - $next['lat'],
-            $current['lng'] - $next['lng']
-        ];
-        $scalarmul = $vectorX[0] * $vectorY[0] + $vectorX[1] * $vectorY[1];
-        $LengthX = sqrt(pow($vectorX[0], 2) + pow($vectorX[1], 2));
-        $LengthY = sqrt(pow($vectorY[0], 2) + pow($vectorY[1], 2));
-        return round(acos(($scalarmul / ($LengthX * $LengthY))) * 180 / pi(), 2);
+        try {
+            $vectorX = [
+                $current['lat'] - $prev['lat'],
+                $current['lng'] - $prev['lng']
+            ];
+            $vectorY = [
+                $current['lat'] - $next['lat'],
+                $current['lng'] - $next['lng']
+            ];
+            $scalarmul = $vectorX[0] * $vectorY[0] + $vectorX[1] * $vectorY[1];
+            $LengthX = sqrt(pow($vectorX[0], 2) + pow($vectorX[1], 2));
+            $LengthY = sqrt(pow($vectorY[0], 2) + pow($vectorY[1], 2));
+            return round(acos(($scalarmul / ($LengthX * $LengthY))) * 180 / pi(), 2);
+        } catch (Exception $e) {
+            Logger::getLogger("dev")->log("Ошибка вычисления угла поворота $e->getMessage()\n" . json_encode($prev) . "\n" . json_encode($current) . "\n" . json_encode($next));
+        }
+        return "0";
     }
 
 
