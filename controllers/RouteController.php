@@ -21,15 +21,13 @@ class RouteController extends ApiController
             $result = JWTCom::decodeJWT($request->get('key'));
             if ($result["status"] == "success") {
                 Logger::getLogger("dev")->log("Начато получение API маршрута");
-                if ($request->get('FromLat') != null && $request->get('FromLng') != null && $request->get('ToLat') != null && $request->get('ToLng') != null) {
-
-                    $request = Yii::$app->request;
-                    $data = $this->getFullApi($request->get('FromLat'), $request->get('FromLng'), $request->get('ToLat'), $request->get('ToLng'));
+                if (($request->get('from') != null && $request->get('to')!=null)) {
+                    $data = $this->getFullApi($request->get('from'),$request->get('to'));
                     $turns = $this->getTurns($data);
                     $this->InsertAngleIntoArr($turns);
                     $this->InsertWeatherIntoArr($turns);
-                    if ($request->get('OnlyTurns') == 'true') $data = $turns;
 
+                    if ($request->get('onlyTurns') == 'true') $data = $turns;
                     Logger::getLogger("dev")->log("Успешно получен маршрут по ключу: " . $request->get('key'));
 
                     $this->responce(array(
@@ -113,17 +111,21 @@ class RouteController extends ApiController
     }
 
 
-    private function getFullApi($FromLat, $FromLng, $ToLat, $ToLng)           //Получение общего массива маршрута по АПИ 
+    private function getFullApi($from ,$to)           //Получение общего массива маршрута по АПИ 
     {
         Logger::getLogger("dev")->log("Получение маршрута с MapQuest");
-        $curl = Yii::$app->params['routeURL'] . Yii::$app->params['routeKey'] . "&from=" . $FromLat . "," . $FromLng . "&to=" . $ToLat . "," . $ToLng;
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_URL, $curl);
-        $responce = curl_exec($ch);
-        curl_close($ch);
-        $data = json_decode($responce, true);
+        $curl = curl_init();
+        curl_setopt_array($curl,[
+            CURLOPT_URL => Yii::$app->params['routeURL']."?key=".Yii::$app->params['routeKey']."&from=$from&to=$to",
+            CURLOPT_RETURNTRANSFER => true,
+        ]);
+        $responce = curl_exec($curl);
+        curl_close($curl);
+        $data = json_decode($responce,true);
         return $data;
+    
+
+
     }
 }

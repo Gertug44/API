@@ -95,7 +95,7 @@ class Weather
             $test =  json_decode($responce, true);
             return Weather::getWeatherСoefficient($test['weather']['0']['id']);
         } catch (Exception $e) {
-            Logger::getLogger("dev")->log("Ошибка добавления погоды маршрута для $lat $lng $e->getMessage()");
+            Logger::getLogger("dev")->log("Ошибка добавления погоды для $lat $lng $e->getMessage()");
         }
     }
 }
