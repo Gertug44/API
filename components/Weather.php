@@ -73,7 +73,14 @@ class Weather
         );
         return (isset($codes[$code])) ? $codes[$code] : 'error';
     }
-    public static function getWeather($lat, $lng)             //Возвращает 
+
+    /**
+     * Вычисление погоды по координатам
+     * @param $lat
+     * @param $lng
+     * @return float|string|void
+     */
+    public static function getWeather($lat, $lng)             //Возвращает
     {
         try {
             $url = Yii::$app->params['weatherURL'];

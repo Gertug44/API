@@ -13,7 +13,16 @@ class RouteController extends ApiController
 {
     public $enableCsrfValidation = false;
 
-    public function actionGetRoute()        //Возвращает маршрут с углами поворотов и погодой
+    /**
+     * Возвращает готовый маршрут с углами поворотов и погодой для каждой точки маршрута
+     *
+     * GET-параметры:
+     *                key-Ключ API
+     *                from Координаты|Адрес начала маршрута
+     *                to Координаты|Адрес начала маршрута
+     *                onlyTurns Если true, то АПИ вернет только все точки маршрута с погодой и кглами,иначе вернет весь исходный массив
+     */
+    public function actionGetRoute()
     {
         $request = Yii::$app->request;
 
@@ -56,14 +65,19 @@ class RouteController extends ApiController
         ), 401);
     }
 
-    private function getTurns(&$data)         //Функция выбирает из общего массива данных только повороты 
+    /**
+     * Выбирает все точки маршрута и возвращает их в виде ссылочного массива
+     * @param $data - Исходный(полный) массив ,полученный по АПИ
+     * @return array|null
+     */
+    private function getTurns(&$data)
     {
         $turns = [];
         try {
             foreach ($data['route']['legs']['0']['maneuvers'] as &$startpoint) {
                 $turns[] = &$startpoint['startPoint'];
             }
-            Logger::getLogger("dev")->log("Успешно получены все повороты маршрута");
+            Logger::getLogger("dev")->log("Успешно получены все точки маршрута");
             return $turns;
         } catch (Exception $e) {
             Logger::getLogger("dev")->log("Ошибка поиска маршрута" . $e->getMessage());
@@ -75,13 +89,22 @@ class RouteController extends ApiController
         return null;
     }
 
-    private function InsertWeatherIntoArr(&$array)              //Вычисляет погоду для каждого поворота маршрута
+    /**
+     * Добавляет погоду для каждой точки маршрута в исходный(полный) массив
+     * @param $array -  Массив всех точек маршрута
+     */
+    private function InsertWeatherIntoArr(&$array)
     {
         for ($i = 0; $i <= count($array) - 1; $i++) {
             $array[$i]['weather'] = Weather::getWeather($array[$i]['lat'], $array[$i]['lng']);
         }
     }
-    private function InsertAngleIntoArr(&$array)                //Вычисляет углы поворотов 
+
+    /**
+     * Добавляет углы поворота в исходный(полный) массив
+     * @param $array - Массив всех точек маршрута
+     */
+    private function InsertAngleIntoArr(&$array)
     {
 
         for ($i = 1; $i <= count($array) - 2; $i++) {
@@ -89,7 +112,14 @@ class RouteController extends ApiController
         }
     }
 
-    private function CalculateAngleByVectors($prev, $current, $next)        //Вычисляет угол по трем векторам
+    /**
+     * Вычисляет угол между 3 точками (Выпускает 2 вектора из центральной точки и находит угол между ними)
+     * @param $prev -Координаты первой точки
+     * @param $current -Координаты центральной точки
+     * @param $next -Координаты последней точки
+     * @return float|string
+     */
+    private function CalculateAngleByVectors($prev, $current, $next)
     {
         try {
             $vectorX = [
@@ -100,10 +130,10 @@ class RouteController extends ApiController
                 $current['lat'] - $next['lat'],
                 $current['lng'] - $next['lng']
             ];
-            $scalarmul = $vectorX[0] * $vectorY[0] + $vectorX[1] * $vectorY[1];
-            $LengthX = sqrt(pow($vectorX[0], 2) + pow($vectorX[1], 2));
-            $LengthY = sqrt(pow($vectorY[0], 2) + pow($vectorY[1], 2));
-            return round(acos(($scalarmul / ($LengthX * $LengthY))) * 180 / pi(), 2);
+            $scalarMul = $vectorX[0] * $vectorY[0] + $vectorX[1] * $vectorY[1];         //Скалярное произведение векторов
+            $LengthX = sqrt(pow($vectorX[0], 2) + pow($vectorX[1], 2)); //Длина первого вектора
+            $LengthY = sqrt(pow($vectorY[0], 2) + pow($vectorY[1], 2)); //Длина второго вектора
+            return round(acos(($scalarMul / ($LengthX * $LengthY))) * 180 / pi(), 2);
         } catch (Exception $e) {
             Logger::getLogger("dev")->log("Ошибка вычисления угла поворота $e->getMessage()\n" . json_encode($prev) . "\n" . json_encode($current) . "\n" . json_encode($next));
         }
@@ -111,7 +141,13 @@ class RouteController extends ApiController
     }
 
 
-    private function getFullApi($from ,$to)           //Получение общего массива маршрута по АПИ 
+    /**
+     * Получение полного массива со всеми данными по маршруту по АПИ
+     * @param $from -Координаты|Адрес начала маршрута
+     * @param $to -Координаты|Адрес окончания маршрута
+     * @return mixed
+     */
+    private function getFullApi($from ,$to)
     {
         Logger::getLogger("dev")->log("Получение маршрута с MapQuest");
 
