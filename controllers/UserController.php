@@ -16,7 +16,7 @@ class UserController extends ApiController
         $post=(file_get_contents("php://input"));
         $data = json_decode($post);
         $email = $data->email;
-        $password = $data->password;
+        $password   = $data->password;
 
         Logger::getLogger("dev")->log("Начата регистрация пользователя");
         if (!empty($email) && !empty($password))
