@@ -6,11 +6,11 @@ use \Firebase\JWT\JWT;
 class JWTCom {
     static function createJWT($user)
     {
-        include_once '..\config\core.php';
-        include_once '..\libs\php-jwt-master\src\BeforeValidException.php';
-        include_once '..\libs\php-jwt-master\src\ExpiredException.php';
-        include_once '..\libs\php-jwt-master\src\SignatureInvalidException.php';
-        include_once '..\libs\php-jwt-master\src\JWT.php';
+        include_once __DIR__.'/../config/core.php';
+        include_once __DIR__.'/../libs/php-jwt-master/src/BeforeValidException.php';
+        include_once __DIR__.'/../libs/php-jwt-master/src/ExpiredException.php';
+        include_once __DIR__.'/../libs/php-jwt-master/src/SignatureInvalidException.php';
+        include_once __DIR__.'/../libs/php-jwt-master/src/JWT.php';
         $token = array(
             "iss" => $iss,
             "aud" => $aud,
@@ -27,11 +27,11 @@ class JWTCom {
     static function decodeJWT($jwt)
     {
         $result =[];
-        include_once '../config/core.php';
-        include_once '../libs/php-jwt-master/src/BeforeValidException.php';
-        include_once '../libs/php-jwt-master/src/ExpiredException.php';
-        include_once '../libs/php-jwt-master/src/SignatureInvalidException.php';
-        include_once '../libs/php-jwt-master/src/JWT.php';
+        include_once __DIR__.'/../config/core.php';
+        include_once __DIR__.'/../libs/php-jwt-master/src/BeforeValidException.php';
+        include_once __DIR__.'/../libs/php-jwt-master/src/ExpiredException.php';
+        include_once __DIR__.'/../libs/php-jwt-master/src/SignatureInvalidException.php';
+        include_once __DIR__.'/../libs/php-jwt-master/src/JWT.php';
         try{
             $decoded = JWT::decode($jwt, $key, array('HS256'));
             $result['status']='success';
