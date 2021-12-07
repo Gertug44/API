@@ -11,6 +11,12 @@ class UserController extends ApiController
 {
     public $enableCsrfValidation = false;
     
+    /**
+     * Возвращает JSON строку с сообщением о статусе операции либо сообщение об ошибке
+     *
+     * POST-параметры:
+     *                JSON строка содержащая email и пароль пользователя для его создания
+     */
     public function actionCreate()
     {
         $post=(file_get_contents("php://input"));
@@ -46,7 +52,12 @@ class UserController extends ApiController
             "status" => "fail",
             "error" => "Невозможно создать пользователя."),400);
     }
-    
+    /**
+     * Возвращает JSON строку с сообщением о статусе операции либо сообщение об ошибке
+     *
+     * POST-параметры:
+     *                JSON строка содержащая email и пароль
+     */
     public function actionLogin()
     {
         $post=(file_get_contents("php://input"));
@@ -61,7 +72,7 @@ class UserController extends ApiController
             Logger::getLogger("dev")->log("Ошибка: пустые данные");
             $this->responce(array(
                 "status" => "fail",
-                "error"=>"Валенок, пароль и мыло не должны быть пустыми"),400);
+                "error"=>"Поля пароль или email не заполнены"),400);
         }
         if (Users::find()->where(['email'=>$email])->exists())
         {
@@ -85,9 +96,15 @@ class UserController extends ApiController
         Logger::getLogger("dev")->log("Указанного пользователя нет в бд");
         $this->responce(array(
             "status" => "fail",
-            "error"=>"Обладатель этого мыла еще не смешарик"),400);
+            "error"=>"Пользователь с указанным email не существует"),400);
     }
 
+    /**
+     * Возвращает JSON строку с сообщением о статусе операции либо сообщение об ошибке
+     *
+     * POST-параметры:
+     *                JSON строка содержащая email и  новый пароль для пользователя.
+     */
     public function actionChange(){
         $post=(file_get_contents("php://input"));
         $data = json_decode($post);
@@ -97,7 +114,7 @@ class UserController extends ApiController
         if (empty($email) || empty($newPassword)){
             $this->responce(array(
                 "status" => "fail",
-                "error"=>"Валенок, пароль и мыло не должны быть пустыми"),400);
+                "error"=>"Поле пароль или email пустое"),400);
         }
         if (Users::find()->where(['email'=>$email])->exists())
         {
@@ -112,7 +129,7 @@ class UserController extends ApiController
         }
         $this->responce(array(
            "status" => "fail",
-            "error"=>"Обладатель этого мыла еще не смешарик, нечего менять"),400);              
+            "error"=>"Пользователь с указанным email не существует"),400);              
     }   
 }
 ?>
